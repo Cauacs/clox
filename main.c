@@ -10,10 +10,12 @@ int main(int argc, const char* argv[]){
   int constant = addConstant(&chunk, 1.2);
   //write the opcode
   writeChunk(&chunk, OP_CONSTANT, 1);
-  //write the constant index right after;
   writeChunk(&chunk, constant, 1);
-  
-  writeChunk(&chunk, OP_RETURN, 123);
+  //write the constant index right after;
+  writeChunk(&chunk, OP_RETURN, 1);
+  writeChunk(&chunk, OP_RETURN, 2);
+  writeChunk(&chunk, OP_RETURN, 2);
+  writeChunk(&chunk, OP_RETURN, 3);
   disassembleChunk(&chunk, "test chunk");
   freeChunk(&chunk);
   return 0;

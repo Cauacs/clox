@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "chunk.h"
 #include "debug.h"
 #include "value.h"
 
@@ -30,12 +31,23 @@ static int simpleInstruction(const char* name, int offset){
 int disassembleInstruction(Chunk* chunk, int offset){
   printf("%04d", offset);
 
-  if(offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]){
+  /* if(offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]){ */
+  /*   printf("   | "); */
+  /* } */
+  /* else{ */
+  /*   printf("%4d", chunk->lines[offset]); */
+  /* } */
+
+  int line = getLine(chunk, offset);
+  if(line == chunk->lastPrintedLine){
     printf("   | ");
   }
   else{
-    printf("%4d", chunk->lines[offset]);
+    printf("%4d ", line);
+    chunk->lastPrintedLine = line;
   }
+
+
   uint8_t instruction = chunk->code[offset];
   switch (instruction) {
   case OP_CONSTANT:

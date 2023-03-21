@@ -1,48 +1,76 @@
+#include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "memory.h"
 #include "chunk.h"
-#include <string.h>
-#include <stdio.h>
-#include <ctype.h>
 
 void initChunk(Chunk *chunk){
   chunk->count = 0;
   chunk->capacity = 0;
   chunk->code=NULL;
-  chunk->lines = "";
+
+  //Encoded string
+  chunk->lines = NULL;
+  //Line of the last bytecode
   chunk->lastLine= 1;
+  //last used index of the string
+  chunk->lastIndex = -1;
+
+  chunk->lastPrintedLine = 0;
+
   //init the constants array
   initValueArray(&chunk->constants);
 }
 void writeLine(int line, Chunk* chunk) {
-  int last = strlen(chunk->lines) - 1;
   //empty string(first opcode)
-  if(last == -1){
-    chunk->lines = "1";
+  if(chunk->lastIndex == -1){
+    chunk->lines[0] = '1';
+    chunk->lastIndex = 0;
     return;
   }
   //changed line
   if(line != chunk->lastLine){
-    strcat(chunk->lines, "L1");
+    chunk->lines[chunk->lastIndex + 1] = 'L';
+    chunk->lines[chunk->lastIndex + 2] = '1';
+    chunk->lastIndex += 2;
     chunk->lastLine++;
     return;
   }
   //same line
   else if(line == chunk->lastLine){
-    int opCount = chunk->lines[last] - '0';
+    int opCount = chunk->lines[chunk->lastIndex] - '0';
     opCount++;
-   chunk->lines[last] = opCount + '0';
+    chunk->lines[chunk->lastIndex] = opCount + '0';
   }
- }
+}
 
+int getLine(Chunk* chunk, int offset){
+  int goal = offset + 1;
+  int count = 0;
+  int i = 0;
+  int line = 1;
+  //convert to char
+  do {
+    if(chunk->lines[i] != 'L'){
+      count += chunk->lines[i] - '0';
+    }
+    else if(chunk->lines[i] == 'L'){
+      line++;
+    }
+    i++;
+  }while(count < goal);
+
+  return line;
+}
 
 void writeChunk(Chunk *chunk , uint8_t byte, int line){
   if(chunk->capacity < chunk->count + 1){
     int oldCapacity = chunk->capacity;
     chunk->capacity = GROW_CAPACITY(oldCapacity);
     chunk->code = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
-    //chunk->lines = GROW_ARRAY(char, chunk->lines, oldCapacity, chunk->capacity);
+    chunk->lines = GROW_ARRAY(char, chunk->lines, oldCapacity, chunk->capacity);
   }
   writeLine(line, chunk);
   chunk->code[chunk->count] = byte;
@@ -63,4 +91,5 @@ int addConstant(Chunk* chunk, Value value){
   writeValueArray(&chunk->constants, value);
   return chunk->constants.count - 1;
 }
+
 
